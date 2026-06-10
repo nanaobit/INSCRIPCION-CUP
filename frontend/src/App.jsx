@@ -28,7 +28,7 @@ import {
 export default function App() {
   const { currentUser, logout } = useMockDB();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth < 768);
   const [selectedPostulanteReg, setSelectedPostulanteReg] = useState('');
   
   // Theme dark/light state
@@ -47,6 +47,17 @@ export default function App() {
       localStorage.setItem('ficct_theme', 'light');
     }
   }, [darkMode]);
+
+  // Auto collapse sidebar on small screens
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setSidebarCollapsed(true);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // If not logged in, show lock screen
   if (!currentUser) {
@@ -105,13 +116,22 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-200">
+    <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-200 relative">
       
+      {/* Mobile Sidebar backdrop overlay */}
+      {!sidebarCollapsed && (
+        <div 
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          onClick={() => setSidebarCollapsed(true)}
+        />
+      )}
+
       {/* 1. LEFT SIDEBAR */}
       <aside 
-        className={`bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-850 flex flex-col justify-between transition-all duration-300 relative z-30 ${
-          sidebarCollapsed ? 'w-20' : 'w-72'
-        }`}
+        className={`bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-850 flex flex-col justify-between transition-all duration-300 z-50 
+          fixed md:relative top-0 bottom-0 left-0 h-screen md:h-auto
+          ${sidebarCollapsed ? '-translate-x-full md:translate-x-0 md:w-20' : 'translate-x-0 w-72'}
+        `}
       >
         <div className="space-y-6 pt-6">
           {/* Brand Logo Header */}
@@ -188,7 +208,7 @@ export default function App() {
       <div className="flex-1 flex flex-col min-w-0">
         
         {/* Top bar header */}
-        <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-250 dark:border-slate-850 flex items-center justify-between px-8 relative z-25">
+        <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-250 dark:border-slate-850 flex items-center justify-between px-4 md:px-8 relative z-25">
           <div className="flex items-center space-x-4">
             {/* Sidebar collapse button */}
             <button
@@ -224,7 +244,7 @@ export default function App() {
         </header>
 
         {/* Content body wrapper */}
-        <main className="flex-1 overflow-y-auto p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 max-w-7xl w-full mx-auto">
           {renderContent()}
         </main>
       </div>
